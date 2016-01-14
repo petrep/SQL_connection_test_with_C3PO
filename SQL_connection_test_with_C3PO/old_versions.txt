@@ -1,0 +1,166 @@
+// Working version!
+// I had to add this external jar: jtds-1.3.1.jar (downloadable from SourceForge.net)
+// On the VM, the default sql login is: sa
+
+// Some useful C3PO tips > http://stackoverflow.com/questions/20716017/connection-pooling-in-java-using-c3p0
+// Currently, I am using jconsole to analyze open connections
+
+package com.test;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
+import java.beans.PropertyVetoException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Scanner;
+
+public class SQL_connection_test_with_C3PO {
+	
+	static Connection conn = null;
+	ResultSet rs = null;
+
+	static ComboPooledDataSource cpds = null;
+
+	public static void main(String[] args) throws SQLException,
+			PropertyVetoException {
+		
+		
+		Scanner reader1 = new Scanner(System.in);  // Reading from System.in
+		System.out.println("Stage 1 - everything is null: ");
+		int n1 = reader1.nextInt();
+		//reader.close();
+
+		// String url =
+		// "jdbc:jtds:sqlserver://192.168.226.145;DatabaseName=LIFERAY_DU";
+		// String url =
+		// "jdbc:jtds:sqlserver://192.168.226.145;DatabaseName=putzm1";
+		// String url =
+		// "jdbc:jtds:sqlserver://192.168.226.145;DatabaseName=vivacom44ftp";
+		// String driver = "net.sourceforge.jtds.jdbc.Driver";
+		// String userName = "sa";
+		// String password = "password";
+		// String url = "jdbc:db2://192.168.211.179:50000/testp";
+		// String driver = "COM.ibm.db2os390.sqlj.jdbc.DB2SQLJDriver";
+		// String userName = "db2admin";
+		// String password = "password";
+
+		// Oracle section start
+		// String driver = "oracle.jdbc.driver.OracleDriver";
+		// // String url = "jdbc:oracle:thin:@liferay-cfe3684:1521:eksternweb";
+		// String url = "jdbc:oracle:thin:@localhost:1521:put_the_sid_here";
+		// String userName = "system";
+		// String password = "password";
+		// Oracle section end
+
+		// MySQL section start
+		// String driver = "com.mysql.jdbc.Driver";
+		// String url =
+		// "jdbc:mysql://app2-petrep.rhcloud.com//app2?useUnicode=true&characterEncoding=UTF-8&useFastDateParsing=false";
+		// String userName = "adminffkRUYI";
+		// String password = "XdUZugz119yW";
+		// MySQL section end
+
+		// SQLite3 section start
+		String driver = "org.sqlite.JDBC";
+		String url = "jdbc:sqlite:C:\\tools\\sqlite3\\test.db";
+		String userName = "";
+		String password = "";
+		// SQLite3 section end
+
+		// USING THE com.microsoft.sqlserver.jdbc.SQLServerDriver is NOT
+		// RECOMMENDED - use jtds instead!
+		// String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+		// String url =
+		// "jdbc:sqlserver://liferay-c8a5c3d:1433;databaseName=uea247";
+		// String userName = "sa";
+		// String password = "password";
+
+		// try {
+		// Class.forName(driver);
+		// conn = DriverManager.getConnection(url, userName, password);
+		// System.out
+		// .println("Connected to the database!!! Getting table list...");
+		// DatabaseMetaData dbm = conn.getMetaData();
+		// rs = dbm.getTables(null, null, "%", new String[] { "TABLE" });
+		// while (rs.next()) {
+		// System.out.println(rs.getString("TABLE_NAME"));
+		// }
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// } finally {
+		// conn.close();
+		// rs.close();
+		// }
+
+		cpds = new ComboPooledDataSource();
+		cpds.setDriverClass(driver); // loads the jdbc driver
+		cpds.setJdbcUrl(url);
+		cpds.setUser(userName);
+		cpds.setPassword(password);
+		cpds.setMaxStatements(180);
+		
+		conn = cpds.getConnection();
+		getTableList(1);
+		System.out.println("num of connection: " + cpds.getNumConnections());
+		getTableList(2);
+		System.out.println("num of connection: " + cpds.getNumConnections());
+		getTableList(3);
+		System.out.println("num of connection: " + cpds.getNumConnections());
+		
+		System.out.println("num of connection: " + cpds.getNumConnections());
+		//checkConnectionIsValid();
+		Scanner reader2 = new Scanner(System.in);  // Reading from System.in
+		System.out.println("Stage 2 - cpds active, getTableLists active: ");
+		int n2 = reader2.nextInt();
+		//reader.close();
+		
+		cpds.close();
+		
+//		if (conn != null) {
+//			System.out.println("num of connection: " + cpds.getNumConnections());
+//		}
+		//checkConnectionIsValid();
+		Scanner reader3 = new Scanner(System.in);  // Reading from System.in
+		System.out.println("Stage 3 - cpds is closed: ");
+		int n3 = reader3.nextInt();
+		reader1.close();
+		reader2.close();
+		reader3.close();
+	}
+
+	private static void checkConnectionIsValid() throws SQLException {
+		int timeout = 21;
+		if(cpds.getConnection().isValid(timeout)){
+			System.out.println("connection is valid");
+		}
+		
+	}
+
+	public static void getTableList(int i) throws SQLException {
+		//Connection testConnection = null;
+		Statement testStatement = null;
+		ResultSet rs = null;
+		// test connectivity and initialize pool
+		try {
+			//testConnection = cpds.getConnection();
+			testStatement = conn.createStatement();
+			//testStatement = testConnection.createStatement();
+			
+			rs = testStatement.executeQuery("select * from test1");
+			while (rs.next()) {
+				System.out.println("results printing" + i);
+				System.out.println(rs.getString("col1"));
+			}
+
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			testStatement.close();
+			rs.close();
+			//testConnection.close();
+			//conn.close();
+		}
+	}
+}
